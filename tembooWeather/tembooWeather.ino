@@ -41,17 +41,18 @@ void scrapeWeather() {
   
   // Run the Choreo; when results are available, print them to serial
   GetWeatherByAddressChoreo.run();
-  int code = 0;
+  String code = "";
   while(GetWeatherByAddressChoreo.available()) { /*FROM HOW TO FILTER DATA*/
     String name = GetWeatherByAddressChoreo.readStringUntil('\x1F'); name.trim(); // use “trim” to get rid of newlines
-    String code = GetWeatherByAddressChoreo.readStringUntil('\x1E'); code.trim(); code = code.toInt();
+    code = GetWeatherByAddressChoreo.readStringUntil('\x1E');
     if(name == "weather"){break;} // this leaves code being exactly what we need it to be.
   }
-  if(code <= 12 || code == 17 || code == 18 || code == 35 || ( code >= 37 || code <= 40) || code == 45 || code == 47){
+  code.trim(); int data = code.toInt();
+  Serial.print("code:"); Serial.println(code);
+  if(data <= 12 || data == 17 || data == 18 || data == 35 || ( data>= 37 || data<= 40) || data== 45 || data== 47){
     //do something
   }
 
   GetWeatherByAddressChoreo.close();
-  delay(10000);
 }
 
