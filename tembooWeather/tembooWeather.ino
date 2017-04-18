@@ -2,7 +2,7 @@
 #include <BlynkSimpleEsp8266.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <WidgetRTC.h>
+//#include <WidgetRTC.h>
 #include <Temboo.h>
 #include "TembooAccount.h"
 WiFiClient client;
@@ -42,18 +42,14 @@ void scrapeWeather() {
   // Run the Choreo; when results are available, print them to serial
   GetWeatherByAddressChoreo.run();
   int code = 0;
-  while(GetWeatherByAddressChoreo.available()) {
-    //get code variable by observing the output and taking code from it.
-    char c = GetWeatherByAddressChoreo.read();    
-    Serial.print(c);
-    /*FROM HOW TO FILTER DATA*/
-    String data = GetWeatherByAddressChoreo.readStringUntil('\x1E');
-    data.trim(); // use “trim” to get rid of newlines
-  }  
-    Serial.print("code: "); Serial.println(code);
-    if(code <= 12 || code == 17 || code == 18 || code == 35 || ( code >= 37 || code <= 40) || code == 45 || code == 47){
-      //do something
-    }
+  while(GetWeatherByAddressChoreo.available()) { /*FROM HOW TO FILTER DATA*/
+    String name = GetWeatherByAddressChoreo.readStringUntil('\x1F'); name.trim(); // use “trim” to get rid of newlines
+    String code = GetWeatherByAddressChoreo.readStringUntil('\x1E'); code.trim(); code = code.toInt();
+    if(name == "weather"){break;} // this leaves code being exactly what we need it to be.
+  }
+  if(code <= 12 || code == 17 || code == 18 || code == 35 || ( code >= 37 || code <= 40) || code == 45 || code == 47){
+    //do something
+  }
 
   GetWeatherByAddressChoreo.close();
   delay(10000);
