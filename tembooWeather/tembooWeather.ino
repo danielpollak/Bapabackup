@@ -45,8 +45,10 @@ void scrapeWeather() {
   while(GetWeatherByAddressChoreo.available()) {
     //get code variable by observing the output and taking code from it.
     char c = GetWeatherByAddressChoreo.read();    
-    code = 0;
     Serial.print(c);
+    /*FROM HOW TO FILTER DATA*/
+    String data = GetWeatherByAddressChoreo.readStringUntil('\x1E');
+    data.trim(); // use “trim” to get rid of newlines
   }  
     Serial.print("code: "); Serial.println(code);
     if(code <= 12 || code == 17 || code == 18 || code == 35 || ( code >= 37 || code <= 40) || code == 45 || code == 47){
