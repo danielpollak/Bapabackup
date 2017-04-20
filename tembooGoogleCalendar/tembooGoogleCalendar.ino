@@ -34,18 +34,19 @@ void scrapeCalendar() {
   SearchEventsChoreo.setAppKey(TEMBOO_APP_KEY);
     
   // Set Choreo inputs
+   // Set Choreo inputs
     SearchEventsChoreo.addInput("ResponseFormat", "xml");
     SearchEventsChoreo.addInput("RefreshToken", "1/1Q8i7PsjI3bWvJT35bfnaa8ZE6oeISthyGlf1rbNQoU3RlbBvBZqRSjLMTBEQUAr");
-    SearchEventsChoreo.addInput("Query", "CS");
-    SearchEventsChoreo.addInput("CalendarID", "o7j1lqsqfnbbl39grvld25hjas@group.calendar.google.com");
     SearchEventsChoreo.addInput("ClientSecret", "qPZ7Sq7JLWz9QqFfbZFqzHGW");
+    SearchEventsChoreo.addInput("CalendarID", "o7j1lqsqfnbbl39grvld25hjas@group.calendar.google.com");
+    SearchEventsChoreo.addInput("SingleEvent", "1");
     SearchEventsChoreo.addInput("ClientID", "422310769533-ks1l8016agn5jbe20l0qg362euq403fg.apps.googleusercontent.com");
-    SearchEventsChoreo.addInput("MinTime", "2017-04-20T01:00:00-04:00");
     SearchEventsChoreo.addInput("MaxTime", "2017-04-20T23:59:59-04:00");
+    SearchEventsChoreo.addInput("MinTime", "2017-04-20T01:00:00-04:00");
     
     //before run, set output filters (DAN)
-    String classSummaryPath = "//summary" //"/o/items/e/summary";
-    String classDescriptionPath = "//description";
+    String classSummaryPath = "//e/summary";
+    String classDescriptionPath = "//e/description";
     SearchEventsChoreo.addOutputFilter("summary", classSummaryPath, "Response");
     SearchEventsChoreo.addOutputFilter("description", classDescriptionPath, "Response");
     
@@ -57,17 +58,16 @@ void scrapeCalendar() {
     
   // Run the Choreo; when results are available, print them to serial
   SearchEventsChoreo.run();
-//  String c = "";
+  String stuff[5];
+  String total = "";
   while(SearchEventsChoreo.available()) {
-//    String name = SearchEventsChoreo.readStringUntil('\x1F'); name.trim(); // use “trim” to get rid of newlines
-//    String code = SearchEventsChoreo.readStringUntil('\x1E');
-    char c = SearchEventsChoreo.read();
-    
-//    Serial.print(name); Serial.println(code);
-  Serial.print(c);
+//    String summary = SearchEventsChoreo.readStringUntil('\x1F'); // use “trim” to get rid of newlines
+    String description = SearchEventsChoreo.readStringUntil('\x1E');
+//    total += summary;
+    total += description;
   }
-  //Serial.print(c);
-  delay(1000);
+  Serial.println(total);
+  delay(100);
   SearchEventsChoreo.close();
 }
 
