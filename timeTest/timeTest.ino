@@ -2,8 +2,6 @@
 #include <BlynkSimpleEsp8266.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <Temboo.h>
-#include "TembooAccount.h"
 #include <WidgetRTC.h>
 WiFiClient client;
 
@@ -14,11 +12,16 @@ void setup() {
   Serial.begin(9600);
   Blynk.begin(auth, ssid, pass); // WifiClient automatically uses this
   rtc.begin();
-  testGetTime();
+  Blynk.run();
+  Blynk.run();
+  delay(1000);
+  Serial.println(String(year()) + "-" + month() + "-" + day() + "T01:00:00-04:00");
 }
 
 void loop() {
   Blynk.run();
+  testGetTime();
+  delay(5000);
 }
 
 void testGetTime(){
