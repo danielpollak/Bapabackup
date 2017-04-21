@@ -9,15 +9,20 @@ WidgetRTC rtc;
 WiFiClient client;
 
 char auth[] = "a4d69c753a8e4b1fac95fee91e20aad2"; char ssid[] = "CS390IOT"; char pass[] = "12345678";
-String needed_stuff[]=[]
-String date = ""
+//String needed_stuff[]=[]
+String data[2];
+//String date = "";
 
 void setup() {
   Serial.begin(9600);
   Blynk.begin(auth, ssid, pass); // WifiClient automatically uses this
+  rtc.begin();
   Blynk.run();Blynk.run();delay(1000); // gets Blynk up and ready to use RTC
-  date = getDate();
-  Serial.println("date: " + date);
+//  Serial.println("date: " + String(year()) + "-" + String(month()) + "-" + String(day()) + "T01:00:00-04:00");
+//  date = getDate(data);
+  getDate(data);
+  Serial.println("date1: " + data[0]);
+  Serial.println("date2: " + data[1]);
   scrapeCalendar();
 }
 
@@ -42,12 +47,12 @@ void scrapeCalendar() {
   SearchEventsChoreo.addInput("RefreshToken", "1/1Q8i7PsjI3bWvJT35bfnaa8ZE6oeISthyGlf1rbNQoU3RlbBvBZqRSjLMTBEQUAr");
   SearchEventsChoreo.addInput("ClientSecret", "qPZ7Sq7JLWz9QqFfbZFqzHGW");
   SearchEventsChoreo.addInput("CalendarID", "o7j1lqsqfnbbl39grvld25hjas@group.calendar.google.com");
-  SearchEventsChoreo.addInput("SingleEvent", "1");
+//  SearchEventsChoreo.addInput("SingleEvent", "1");
   SearchEventsChoreo.addInput("ClientID", "422310769533-ks1l8016agn5jbe20l0qg362euq403fg.apps.googleusercontent.com");
 //  SearchEventsChoreo.addInput("MaxTime", "2017-04-20T23:59:59-04:00");
 //  SearchEventsChoreo.addInput("MinTime", "2017-04-20T01:00:00-04:00");
-  SearchEventsChoreo.addInput("MinTime", date);
-  SearchEventsChoreo.addInput("MaxTime", date);
+  SearchEventsChoreo.addInput("MinTime", data[0]);
+  SearchEventsChoreo.addInput("MaxTime", data[1]);
 
   //before run, set output filters (DAN)
   String classSummaryPath = "//e/summary";
@@ -73,8 +78,8 @@ void scrapeCalendar() {
   SearchEventsChoreo.close();
 }
 
-String getDate(){
-  while(year()!=1970){delay(1)} // wait while rtc gets accessed, danger for watchdog
+void getDate(String data[]){
+//  while(year()!=1970){Serial.print(".");delay(1000);} // wait while rtc gets accessed, danger for watchdog
   String d = String(day());
   if(d.length()==1){
     d = "0" + d;
@@ -83,6 +88,7 @@ String getDate(){
   if(m.length()==1){
     m = "0" + m;
   }
-  return String(year()) + "-" + m + "-" + d + "T01:00:00-04:00";
+  data[0] = String(year()) + "-" + m + "-" + d + "T01:00:00-04:00";
+  data[1] = String(year()) + "-" + m + "-" + d + "T23:59:59-04:00";
 }
 
