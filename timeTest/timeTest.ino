@@ -12,9 +12,7 @@ void setup() {
   Serial.begin(9600);
   Blynk.begin(auth, ssid, pass); // WifiClient automatically uses this
   rtc.begin();
-  Blynk.run();
-  Blynk.run();
-  delay(1000);
+  Blynk.run();Blynk.run();delay(1000);
   Serial.println(String(year()) + "-" + month() + "-" + day() + "T01:00:00-04:00");
 }
 

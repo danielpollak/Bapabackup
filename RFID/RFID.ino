@@ -1,15 +1,11 @@
 int RFIDResetPin = 13;
-//Register your RFID tags here
-char tag1[13] = "1E009A4067A3";
-char tag2[13] = "010230F28243";
 
 void setup(){
   Serial.begin(9600);
   pinMode(RFIDResetPin, OUTPUT);
-  digitalWrite(RFIDResetPin, HIGH);
+  digitalWrite(RFIDResetPin, LOW); delay(5); digitalWrite(RFIDResetPin, HIGH); delay(5);
   //ONLY NEEDED IF CONTROLING THESE PINS - EG. LEDs
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
+
 }
 
 void loop(){
@@ -18,6 +14,7 @@ void loop(){
   boolean reading = false;
   while(Serial.available()){
     int readByte = Serial.read(); //read next available byte
+    Serial.print(readByte);
     if(readByte == 2) reading = true; //begining of tag
     if(readByte == 3) reading = false; //end of tag
     if(reading && readByte != 2 && readByte != 10 && readByte != 13){
@@ -26,24 +23,13 @@ void loop(){
       index ++;
     }
   }
-  checkTag(tagString); //Check if it is a match
   clearTag(tagString); //Clear the char of all value
   resetReader(); //eset the RFID reader
-}
-
-void checkTag(char tag[]){
-  if(strlen(tag) == 0) return; //empty, no need to contunue
-
-  if(compareTag(tag, tag1)){ // if matched tag1, do this
-    lightLED(2);
-  }else{
-    Serial.println(tag); //read out any unknown tag
-  }
-
+  Serial.println();
 }
 
 void resetReader(){
-  digitalWrite(RFIDResetPin, LOW);
+  digitalWrite(RFIDResetPin, LOW);delay(5);
   digitalWrite(RFIDResetPin, HIGH);
   delay(150);
 }
