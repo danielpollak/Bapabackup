@@ -20,7 +20,7 @@ void setup() {
   rtc.begin();
   Blynk.run();Blynk.run();delay(1000);
   scrapeWeather();
-  delay(2000);
+  delay(3000);
 //  Serial.println("date: " + String(year()) + "-" + String(month()) + "-" + String(day()) + "T01:00:00-04:00");
   getDate(date);
 //  Serial.println("date1: " + date[0]);
@@ -119,7 +119,6 @@ void scrapeCalendar() {
   SearchEventsChoreo.addOutputFilter("summary", classSummaryPath, "Response");
   SearchEventsChoreo.addOutputFilter("description", classDescriptionPath, "Response");
     
-
   // Identify the Choreo to run
   SearchEventsChoreo.setChoreo("/Library/Google/Calendar/SearchEvents");
     
@@ -127,16 +126,39 @@ void scrapeCalendar() {
   SearchEventsChoreo.run();
   String stuff[5];
   String total = "";
+  int pos = 0;
   while(SearchEventsChoreo.available()) {
     String summary = SearchEventsChoreo.readStringUntil('\x1F'); summary.trim(); // use “trim” to get rid of newlines
-    String description = SearchEventsChoreo.readStringUntil('\x1E'); description.trim();
+    String description = SearchEventsChoreo.readStringUntil('\x1E');
+    int tmp = 0;
+    String sub = "";
     if(summary == "description"){
-      total += description; //add this to stuff later
+//      total += description; //add this to "stuff" later
+      while(description.indexOf('\n') > 0){
+        bool here = false;
+        tmp = description.indexOf('\n');
+        sub = description.substring(0,tmp);
+        for(int i = 0; i<5; i++){
+          if(stuff[i] == sub){
+            here = true;
+          }
+        }
+        if(!here){
+          stuff[pos] = sub;
+          pos = pos + 1;
+          here = false;
+        }
+        description = description.substring(tmp+1);
+      }
     }
 //    Serial.println("Summary: " + summary);
 //    Serial.println("Description: " + description);
   }
-  Serial.println(total);
+//  Serial.println(total);
+  Serial.println("Printing out stuff...");
+  for(int x = 0; x<5; x++){
+    Serial.println(stuff[x]);
+  }
   delay(100);
   SearchEventsChoreo.close();
 }
