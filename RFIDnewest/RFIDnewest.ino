@@ -39,9 +39,9 @@ on rfid module, pins 1, 9, 11 go to GND, D2, and 5V, and pin 7 goes to pin 1 to 
 
 /* -- RFID init -- */
 #include <SoftwareSerial.h>
-#define RFIDINTERRUPTPIN 3
+#define RFIDINTERRUPTPIN 4
 // Choose two pins for SoftwareSerial
-SoftwareSerial rSerial(2, 7); // RX, TX
+SoftwareSerial rSerial(5, 7); // RX, TX
 // For SparkFun's tags, we will receive 16 bytes on every tag read, but throw four away. The 13th space will always be 0, since proper strings in Arduino end with 0
 // These constants hold the total tag length (tagLen) and the length of the part we want to keep (idLen),plus the total number of tags we want to check against (kTags)
 const int tagLen = 16;

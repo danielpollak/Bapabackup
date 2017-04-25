@@ -39,7 +39,7 @@ on rfid module, pins 1, 9, 11 go to GND, D2, and 5V, and pin 7 goes to pin 1 to 
 #include <SoftwareSerial.h>
 
 // Choose two pins for SoftwareSerial
-SoftwareSerial rSerial(2, 3); // RX, TX
+SoftwareSerial rSerial(5, 3); // RX, TX
 // For SparkFun's tags, we will receive 16 bytes on every
 // tag read, but throw four away. The 13th space will always
 // be 0, since proper strings in Arduino end with 0
@@ -66,7 +66,7 @@ void setup() {
   // Starts the hardware and software serial ports
    Serial.begin(9600);
    rSerial.begin(9600);
-   pinMode(7, INPUT);
+   pinMode(5, INPUT);
 }
 
 void loop() {
