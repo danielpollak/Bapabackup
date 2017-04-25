@@ -9,6 +9,7 @@ WidgetRTC rtc;
 WiFiClient client;
 
 char auth[] = "9b1b5f1de728419487c4dca8ef396462"; char ssid[] = "CS390IOT"; char pass[] = "12345678";
+//char ssid[] = "Squad"; char pass[] = "thisisatest";
 String date[2];
 volatile byte ONOFF = HIGH;
 int row_idx = 0, v0 = 0, v2 = 0;
@@ -127,9 +128,13 @@ void scrapeCalendar() {
   String stuff[5];
   String total = "";
   while(SearchEventsChoreo.available()) {
-//    String summary = SearchEventsChoreo.readStringUntil('\x1F'); // use “trim” to get rid of newlines
-    String description = SearchEventsChoreo.readStringUntil('\x1E');
-    total += description;
+    String summary = SearchEventsChoreo.readStringUntil('\x1F'); summary.trim(); // use “trim” to get rid of newlines
+    String description = SearchEventsChoreo.readStringUntil('\x1E'); description.trim();
+    if(summary == "description"){
+      total += description; //add this to stuff later
+    }
+//    Serial.println("Summary: " + summary);
+//    Serial.println("Description: " + description);
   }
   Serial.println(total);
   delay(100);
