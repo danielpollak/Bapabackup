@@ -40,17 +40,17 @@ on rfid module, pins 1, 9, 11 go to GND, D2, and 5V, and pin 7 goes to pin 1 to 
 /* -- RFID init -- */
 #include <SoftwareSerial.h>
 #define RFIDINTERRUPTPIN 4
-// Choose two pins for SoftwareSerial
+// Choosepce two pins for SoftwareSerial
 SoftwareSerial rSerial(5, 7); // RX, TX
 // For SparkFun's tags, we will receive 16 bytes on every tag read, but throw four away. The 13th space will always be 0, since proper strings in Arduino end with 0
 // These constants hold the total tag length (tagLen) and the length of the part we want to keep (idLen),plus the total number of tags we want to check against (kTags)
 const int tagLen = 16;
 const int idLen = 13;
 char newTag[idLen]; // Empty array to hold a freshly scanned tag
-const int kTags = 4;
+const int kTags = 5;
 
 // Put your known tags here!
-char knownTags[kTags][idLen] = {"7A005B0FF8D6"};
+char knownTags[kTags][idLen] = {"7F001AFE31AA", "7F001B09066B", "7F001B63E0E7", "7F001B4E577D", "7F001B4C0C24"};
 void initRFID(){
    Serial.begin(9600);
    rSerial.begin(9600);
@@ -97,8 +97,8 @@ void rfidRead(){
     }
 
   // Once newTag has been checked, fill it with zeroes to get ready for the next tag read
-  for (int c=0; c < idLen; c++) {newTag[c] = 0;}
-  }
+    for (int c=0; c < idLen; c++) {newTag[c] = 0;}
+    }
   }
 }
   
