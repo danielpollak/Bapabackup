@@ -1,44 +1,28 @@
+/*--Blynk--*/
 #define BLYNK_PRINT Serial
 #include <BlynkSimpleEsp8266.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <Temboo.h>
-#include "TembooAccount.h"
 #include <WidgetRTC.h>
 WidgetRTC rtc;
 WiFiClient client;
-
 char auth[] = "9b1b5f1de728419487c4dca8ef396462"; char ssid[] = "CS390IOT"; char pass[] = "12345678";
-//char ssid[] = "Squad"; char pass[] = "thisisatest";
-String date[2];
 volatile byte ONOFF = HIGH;
 int row_idx = 0, v0 = 0, v2 = 0;
-
-void setup() {
-  Serial.begin(9600);
+void blynkInit(){
   Blynk.begin(auth, ssid, pass); // WifiClient automatically uses this
   rtc.begin();
   Blynk.run();Blynk.run();delay(1000);
-  scrapeWeather();
-  delay(3000);
-//  Serial.println("date: " + String(year()) + "-" + String(month()) + "-" + String(day()) + "T01:00:00-04:00");
-  getDate(date);
-//  Serial.println("date1: " + date[0]);
-//  Serial.println("date2: " + date[1]);
-  scrapeCalendar();
   Blynk.virtualWrite(V0, HIGH);
   Blynk.virtualWrite(V1, "clr");
 }
-
 BLYNK_WRITE(V0){
-  v0 = param.asInt();
-  ONOFF = v0;
+  v0 = param.asInt(); ONOFF = v0;
   if(!ONOFF){
     Blynk.virtualWrite(V1, "clr");
     row_idx = 0;
   }
 }
-
 BLYNK_WRITE(V2){
   v2 = param.asInt();
   if(v2 && ONOFF){
@@ -46,6 +30,26 @@ BLYNK_WRITE(V2){
     row_idx = row_idx + 1;
   }
 }
+/*--Blynk--*/
+
+/*--Temboo--*/
+#include <Temboo.h>
+#include "TembooAccount.h"
+String date[2];
+void tembooInit(){
+  scrapeWeather();
+  delay(3000);getDate(date);
+  scrapeCalendar();
+}
+/*--Temboo--*/
+
+void setup() {
+  Serial.begin(9600);
+  blynkInit();
+  tembooInit(); // depends on Blynk
+}
+
+
 
 void loop() {
   Blynk.run();
