@@ -217,16 +217,18 @@ void rfidRead(){
       // Take each byte out of the serial buffer, one at a time
       readByte = rSerial.read();
       Serial.print(char(readByte));
-
       /* This will skip the first byte (2, STX, start of text) and the last three, ASCII 13, CR/carriage return, ASCII 10, LF/linefeed, and ASCII 3, ETX/end of text, leaving only the unique part of the tag string. It puts the byte into
       the first space in the array, then steps ahead one spot */
-      if (readByte != 2 && readByte!= 13 && readByte != 10 && readByte != 3) {newTag[i] = readByte; i++;}
+      if (readByte != 2 && readByte!= 13 && readByte != 10 && readByte != 3) {
+        newTag[i] = readByte; 
+        i++;
+      }
       if (readByte == 3) {  tag = false; }      // If we see ASCII 3, ETX, the tag is over
     }
   
   // don't do anything if the newTag array is full of zeroes
   if (strlen(newTag)== 0) {return;}
-  else
+  else //check against known tags, increase total if in known tags
   {
     int total = 0;
     for (int ct=0; ct < kTags; ct++){
@@ -243,5 +245,9 @@ int checkTag(char nTag[], char oTag[]) {
     for (int i = 0; i < idLen; i++) {
       if (nTag[i] != oTag[i]) {return 0;}
     }
+  if(ONOFF){
+      Blynk.virtualWrite(V1, "add", row_idx, nTag, "Here");
+      row_idx = row_idx + 1;
+  }
   return 1;
 }
