@@ -43,32 +43,12 @@ void tembooInit(){
 }
 /*--Temboo--*/
 
-/*--RFID--*/
-//https://learn.sparkfun.com/tutorials/sparkfun-rfid-starter-kit-hookup-guide
-/* -- RFID init -- */
-#include <SoftwareSerial.h>
-#define RFIDINTERRUPTPIN 4
-SoftwareSerial rSerial(5, 7); // RX, TX
-const int tagLen = 16;
-const int idLen = 13;
-char newTag[idLen]; // Empty array to hold a freshly scanned tag
-const int kTags = 5;
-
-// Put your known tags here!
-char knownTags[kTags][idLen] = {"7F001AFE31AA", "7F001B09066B", "7F001B63E0E7", "7F001B4E577D", "7F001B4C0C24"};
-void initRFID(){
-   rSerial.begin(9600);
-   pinMode(RFIDINTERRUPTPIN, INPUT);
-   attachInterrupt(digitalPinToInterrupt(RFIDINTERRUPTPIN), rfidRead, RISING);
-}
-/*--RFID--*/
-
 void setup() {
   Serial.begin(9600);
   blynkInit();
   tembooInit(); // depends on Blynk
-  initRFID();
 }
+
 
 void loop() {
   Blynk.run();
@@ -198,56 +178,4 @@ void getDate(String data[]){
   }
   data[0] = String(year()) + "-" + m + "-" + d + "T01:00:00-04:00";
   data[1] = String(year()) + "-" + m + "-" + d + "T23:59:59-04:00";
-}
-
-void rfidRead(){
-  boolean tag = false;
-  // This makes sure the whole tag is in the serial buffer before
-  // reading, the Arduino can read faster than the ID module can deliver!
-  //  if (rSerial.available() == tagLen) {tag = true;}
-  if (rSerial.available() == tagLen) {
-    tag = true;
-  }
-  if(tag) {
-    Serial.println("H");
-    int i = 0;// Counter for the newTag array
-    int readByte;// Variable to hold each byte read from the serial buffer
-  
-    while (rSerial.available()) {
-      // Take each byte out of the serial buffer, one at a time
-      readByte = rSerial.read();
-      Serial.print(char(readByte));
-      /* This will skip the first byte (2, STX, start of text) and the last three, ASCII 13, CR/carriage return, ASCII 10, LF/linefeed, and ASCII 3, ETX/end of text, leaving only the unique part of the tag string. It puts the byte into
-      the first space in the array, then steps ahead one spot */
-      if (readByte != 2 && readByte!= 13 && readByte != 10 && readByte != 3) {
-        newTag[i] = readByte; 
-        i++;
-      }
-      if (readByte == 3) {  tag = false; }      // If we see ASCII 3, ETX, the tag is over
-    }
-  
-  // don't do anything if the newTag array is full of zeroes
-  if (strlen(newTag)== 0) {return;}
-  else //check against known tags, increase total if in known tags
-  {
-    int total = 0;
-    for (int ct=0; ct < kTags; ct++){
-        total += checkTag(newTag, knownTags[ct]);
-    }
-
-  // Once newTag has been checked, fill it with zeroes to get ready for the next tag read
-    for (int c=0; c < idLen; c++) {newTag[c] = 0;}
-    }
-  }
-}
-
-int checkTag(char nTag[], char oTag[]) {
-    for (int i = 0; i < idLen; i++) {
-      if (nTag[i] != oTag[i]) {return 0;}
-    }
-  if(ONOFF){
-      Blynk.virtualWrite(V1, "add", row_idx, nTag, "Here");
-      row_idx = row_idx + 1;
-  }
-  return 1;
 }
