@@ -278,6 +278,6 @@ void checkTag(char nTag[], char oTag[]) {
 //    for(int x = 0; x < idLen; x++) {
 //      readTag[x] = nTag[x];
 //    }
-  }
+// }
   //return 1;
 }
