@@ -64,6 +64,7 @@ void setup() {
 }
 
 void rfidRead(){
+  analogWrite(13, 220);
   boolean tag = false;
   // This makes sure the whole tag is in the serial buffer before
   // reading, the Arduino can read faster than the ID module can deliver!
@@ -71,8 +72,7 @@ void rfidRead(){
   if (rSerial.available() == tagLen) {
     tag = true;
   }
-  if(tag) {
-    Serial.println("H");
+  if(tag) {//Serial.println("H");
     int i = 0;// Counter for the newTag array
     int readByte;// Variable to hold each byte read from the serial buffer
   
@@ -100,6 +100,7 @@ void rfidRead(){
     for (int c=0; c < idLen; c++) {newTag[c] = 0;}
     }
   }
+  analogWrite(13, 0);
 }
   
 

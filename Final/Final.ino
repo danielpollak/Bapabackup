@@ -1,3 +1,55 @@
+/* -- accelerometer --  */
+#include <Ticker.h>
+Ticker secondTick;
+#define S0 12
+#define S1 14
+boolean SLUNG = false;
+volatile int watchdogCount = 0;
+float acceli[3] = {0, 0, 0};
+float accelf[3] = {0, 0, 0};
+float displacement[3] = {0, 0, 0};
+float displacementval = 0;
+float interval = .5; // TOO SMALL OF A VALUE GIVES YOU TOO SMALL NUMBERS
+void accelerometerInit(){
+  secondTick.attach(interval, displace);
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(A0, INPUT);
+  pinMode(13, OUTPUT); //buzzer pin
+}
+void displace() { // TODO: CONVERT DATA
+  /*NOTE: because consumer grade accelerometers cannot find this kind of data
+  I am using it to determine whether the backpack has been "slung"*/
+  // 0b01 
+  digitalWrite(S0, LOW); digitalWrite(S1, LOW);
+  accelf[0] = analogRead(A0);
+  float dx = 0.5 * (accelf[0] - acceli[0]) * pow(interval, 2);
+  displacement[0] = displacement[0] + dx;
+ 
+  // 0b10
+  digitalWrite(S0, HIGH); digitalWrite(S1, LOW);
+  accelf[1] = analogRead(A0);
+  float dy = 0.5 * (accelf[1] - acceli[1]) * pow(interval, 2);
+  displacement[1] = displacement[1] + dy;
+  
+  // 0b11
+  digitalWrite(S0, LOW); digitalWrite(S1, HIGH);
+  accelf[2] = analogRead(A0);
+  float dz = 0.5 * (accelf[2] - acceli[2]) * pow(interval, 2);
+  displacement[2] = displacement[2] + dz;
+
+  //find accelf values
+  acceli[0] = accelf[0];acceli[1] = accelf[1];acceli[2] = accelf[2];
+  
+  displacementval = sqrt(pow(displacement[0], 2) + pow(displacement[1], 2) + pow(displacement[2], 2));
+  Serial.println(displacementval);
+  if(displacementval > 65){
+    secondTick.detach();
+    SLUNG = !SLUNG;
+  }
+}
+/* -- accelerometer --  */
+
 /*--Blynk--*/
 #define BLYNK_PRINT Serial
 #include <BlynkSimpleEsp8266.h>
@@ -6,7 +58,9 @@
 #include <WidgetRTC.h>
 WidgetRTC rtc;
 WiFiClient client;
-char auth[] = "9b1b5f1de728419487c4dca8ef396462"; char ssid[] = "CS390IOT"; char pass[] = "12345678";
+//char auth[] = "9b1b5f1de728419487c4dca8ef396462"; // Evan's
+char auth[] = "a4d69c753a8e4b1fac95fee91e20aad2"; // Dan's
+char ssid[] = "CS390IOT"; char pass[] = "12345678";
 volatile byte ONOFF = HIGH;
 int row_idx = 0, v0 = 0, v2 = 0;
 bool reading = false;
@@ -48,7 +102,6 @@ void tembooInit(){
 
 /*--RFID--*/
 //https://learn.sparkfun.com/tutorials/sparkfun-rfid-starter-kit-hookup-guide
-/* -- RFID init -- */
 #include <SoftwareSerial.h>
 #define RFIDINTERRUPTPIN 4
 SoftwareSerial rSerial(5, 7); // RX, TX
@@ -59,37 +112,62 @@ char readTag[idLen] = "000000000000";
 const int kTags = 5;
 
 // Put your known tags here!
-char knownTags[kTags][idLen] = {"7F001AFE31AA", "7F001B09066B", "7F001B63E0E7", "7F001B4E577D", "7F001B4C0C24"};
+char knownTags[kTags][idLen] = {
+  "7F001AFE31AA", // 0 CS >9000
+  "7F001B09066B", // 1 umbrella
+  "7F001B63E0E7", // 2 CS 390N
+  "7F001B4E577D", // 3 CS 666.6
+  "7F001B4C0C24"};// 4 soldering iron
+
+boolean present [kTags] = {
+  false, // 0 CS >9000
+  false, // 1 umbrella
+  false, // 2 CS 390N
+  false, // 3 CS 666.6
+  false};// 4 soldering iron
+boolean expected [kTags] = {
+  false, // 0 CS >9000
+  false, // 1 umbrella
+  false, // 2 CS 390N
+  false, // 3 CS 666.6
+  false};// 4 soldering iron
+  
 void initRFID(){
    rSerial.begin(9600);
    pinMode(RFIDINTERRUPTPIN, INPUT);
    attachInterrupt(digitalPinToInterrupt(RFIDINTERRUPTPIN), rfidRead, RISING);
 }
 /*--RFID--*/
-
+//general
 void setup() {
   Serial.begin(9600);
+  Serial.println("**Blynk setup:**");
   blynkInit();
+  //Serial.println("**Temboo setup:**");
   //tembooInit(); // depends on Blynk
+  Serial.println("**RFID setup:**");
   initRFID();
+  for(int i = 0; i < 5; i++){
+    Serial.println(expected[i]); Serial.println(present[i]);
+  }
+  Serial.println("**Accelerometer:**");
+  accelerometerInit(); // only initializes ticker here, shouldn't interfere with the temboo stuff
+  //check errything is there 
 }
-
-void loop() {
+void loop() {//
   Blynk.run();
-//  bool already = false;
-//  if(reading){
-//    for(int i = 0; i<5; i++){
-//      if(readTag == knownTags[i] && readTag != "000000000000"){
-//        already = true;
-//      }
-//    }
-//  }
-//  if(ONOFF && !already){
-//    //Blynk.virtualWrite(V1, "add", row_idx, nTag, "Here");
-//    table.addRow(row_idx, readTag, "Here");
-//    row_idx = row_idx + 1;
-//    reading = false;
-//  }
+  if(SLUNG){
+    for(int i = 0; i < kTags; i++){
+      Serial.println(String(present[i]) + "\t" + String(expected[i]));
+      if(present[i] != expected[i]){
+        // RIGHT HERE, MAKE SURE KNOWNTAGS GETS PRINTED GOOD
+        Blynk.notify("Hey you're missing something: "/*+String(knownTags[i])*/); // we explicitly wanted more than one notification.
+        secondTick.attach(interval, displace);
+        Serial.println("notify");
+      }
+    }
+    SLUNG = false;
+  }
 }
 
 void scrapeWeather() {
@@ -123,7 +201,7 @@ void scrapeWeather() {
   code.trim(); int data = code.toInt();
   Serial.print("code:"); Serial.println(code);
   if(data <= 12 || data == 17 || data == 18 || data == 35 || ( data>= 37 || data<= 40) || data== 45 || data== 47){
-    //do something
+    expected[1] = true;
   }
 
   GetWeatherByAddressChoreo.close();
@@ -140,8 +218,7 @@ void scrapeCalendar() {
   SearchEventsChoreo.setAccountName(TEMBOO_ACCOUNT);
   SearchEventsChoreo.setAppKeyName(TEMBOO_APP_KEY_NAME);
   SearchEventsChoreo.setAppKey(TEMBOO_APP_KEY);
-    
-  // Set Choreo inputs
+
   // Set Choreo inputs
   SearchEventsChoreo.addInput("ResponseFormat", "xml");
   SearchEventsChoreo.addInput("RefreshToken", "1/1Q8i7PsjI3bWvJT35bfnaa8ZE6oeISthyGlf1rbNQoU3RlbBvBZqRSjLMTBEQUAr");
@@ -149,8 +226,6 @@ void scrapeCalendar() {
   SearchEventsChoreo.addInput("CalendarID", "o7j1lqsqfnbbl39grvld25hjas@group.calendar.google.com");
 //  SearchEventsChoreo.addInput("SingleEvent", "1");
   SearchEventsChoreo.addInput("ClientID", "422310769533-ks1l8016agn5jbe20l0qg362euq403fg.apps.googleusercontent.com");
-//  SearchEventsChoreo.addInput("MaxTime", "2017-04-20T23:59:59-04:00");
-//  SearchEventsChoreo.addInput("MinTime", "2017-04-20T01:00:00-04:00");
   SearchEventsChoreo.addInput("MinTime", date[0]);
   SearchEventsChoreo.addInput("MaxTime", date[1]);
 
@@ -165,47 +240,43 @@ void scrapeCalendar() {
     
   // Run the Choreo; when results are available, print them to serial
   SearchEventsChoreo.run();
-  String stuff[5];
-  String total = "";
-  int pos = 0;
   while(SearchEventsChoreo.available()) {
     String summary = SearchEventsChoreo.readStringUntil('\x1F'); summary.trim(); // use “trim” to get rid of newlines
+    Serial.println(summary);
     String description = SearchEventsChoreo.readStringUntil('\x1E');
+    int pos = 0; // represents index of the tag of item just scanned in
     int tmp = 0;
     String sub = "";
     if(summary == "description"){
-//      total += description; //add this to "stuff" later
       while(description.indexOf('\n') > 0){
         bool here = false;
         tmp = description.indexOf('\n');
         sub = description.substring(0,tmp);
         for(int i = 0; i<5; i++){
-          if(stuff[i] == sub){
-            here = true;
+          /*we just need a string for comparison*/
+          String kTagString = "";
+          for(int j = 0; j < idLen; j++){
+            kTagString += (knownTags[i][j]);
+          }
+          Serial.println(kTagString);
+          /*we just need a string for comparison*/
+          if(kTagString == sub){ // which index of ktags is represented by this description?
+            pos = i;
+            break;
           }
         }
-        if(!here){
-          stuff[pos] = sub;
-          pos = pos + 1;
-          here = false;
+        if(!present[pos] && !expected[pos]){//  it is already in bag- redundancy checking.
+          expected[pos] = true; // make expected at thing pos equal true
         }
         description = description.substring(tmp+1);
       }
     }
-//    Serial.println("Summary: " + summary);
-//    Serial.println("Description: " + description);
-  }
-//  Serial.println(total);
-  Serial.println("Printing out stuff...");
-  for(int x = 0; x<5; x++){
-    Serial.println(stuff[x]);
   }
   delay(100);
   SearchEventsChoreo.close();
 }
 
 void getDate(String data[]){
-//  while(year()!=1970){Serial.print(".");delay(1000);} // wait while rtc gets accessed, danger for watchdog
   String d = String(day());
   if(d.length()==1){
     d = "0" + d;
@@ -219,65 +290,62 @@ void getDate(String data[]){
 }
 
 void rfidRead(){
+  noInterrupts();
   boolean tag = false;
-  // This makes sure the whole tag is in the serial buffer before
-  // reading, the Arduino can read faster than the ID module can deliver!
-  //  if (rSerial.available() == tagLen) {tag = true;}
-  if (rSerial.available() == tagLen) {
-    tag = true;
-  }
+  // This makes sure the whole tag is in the serial buffer before reading, the Arduino can read faster than the ID module can deliver!
+  if (rSerial.available() == tagLen) {tag = true;}
   if(tag) {
-    noInterrupts();
-    Serial.println("H");
     int i = 0;// Counter for the newTag array
     int readByte;// Variable to hold each byte read from the serial buffer
-  
+    //String tagString = "";
     while (rSerial.available()) {
       // Take each byte out of the serial buffer, one at a time
       readByte = rSerial.read();
       Serial.print(char(readByte));
       /* This will skip the first byte (2, STX, start of text) and the last three, ASCII 13, CR/carriage return, ASCII 10, LF/linefeed, and ASCII 3, ETX/end of text, leaving only the unique part of the tag string. It puts the byte into
       the first space in the array, then steps ahead one spot */
+      
       if (readByte != 2 && readByte!= 13 && readByte != 10 && readByte != 3) {
-        newTag[i] = readByte; 
-        i++;
+        //tagString += char(readByte);
+        newTag[i] = readByte; i++;
+      } else if (readByte == 3) {  tag = false; }      // If we see ASCII 3, ETX, the tag is over
+    }
+    //tagString += " "; //I RANDOMLY NEED TO HAVE EXTRA STUFF HERE
+    //Serial.println("ReadTag:  " + tagString);
+    // don't do anything if the newTag array is full of zeroes
+    if (strlen(newTag)== 0) {return;}
+    else //check against known tags, increase total if in known tags
+    {
+      for(int i = 0; i<5; i++){
+        if(checkTag(newTag, knownTags[i])){
+          Serial.println("HI!");
+          present[i] = !present[i]; break; // change the data in the known present tags
+        }
+//        /*we just need a string for comparison*/
+//        String kTagString = ""; for(int j = 0; j < idLen; j++){ kTagString += (knownTags[i][j]); }; 
+//        Serial.println(kTagString);
+//        /*we just need a string for comparison*/
+//        if(kTagString == tagString){ // which index of ktags is represented by this description?
+//          present[i] = !present[i]; break; // change the data in the known present tags
+//        }
       }
-      if (readByte == 3) {  tag = false; }      // If we see ASCII 3, ETX, the tag is over
+      for (int c=0; c < idLen; c++) {newTag[c] = 0;} // Once newTag has been checked, fill it with zeroes to get ready for the next tag read
     }
-  
-  // don't do anything if the newTag array is full of zeroes
-  if (strlen(newTag)== 0) {return;}
-  else //check against known tags, increase total if in known tags
-  {
-    //int total = 0;
-    for (int ct=0; ct < kTags; ct++){
-        //total += checkTag(newTag, knownTags[ct]);
-        checkTag(newTag, knownTags[ct]);
-    }
-
-  // Once newTag has been checked, fill it with zeroes to get ready for the next tag read
-    for (int c=0; c < idLen; c++) {newTag[c] = 0;}
-    }
-    interrupts();
   }
+  interrupts();
 }
-
-void checkTag(char nTag[], char oTag[]) {
-  bool same = false;
+            //    newtag,       knowntags
+boolean checkTag(char nTag[], char oTag[]) {
+  bool same = true;
   for (int i = 0; i < idLen; i++) {
-    if (nTag[i] != oTag[i]) {same = false;}
+    if (nTag[i] != oTag[i]) {
+      same = false;
+    }
   }
-  same = true;
   if(ONOFF && same){
     //Blynk.virtualWrite(V1, "add", row_idx, nTag, "Here");
     table.addRow(row_idx, nTag, "Here");
     row_idx = row_idx + 1;
   }
-//  if(same){
-//    reading = true;
-//    for(int x = 0; x < idLen; x++) {
-//      readTag[x] = nTag[x];
-//    }
-// }
-  //return 1;
+  return same;
 }
