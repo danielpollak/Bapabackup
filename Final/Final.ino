@@ -159,9 +159,11 @@ void loop() {//
       Serial.println(String(present[i]) + "\t" + String(expected[i]));
       if(present[i] != expected[i]){
         // RIGHT HERE, MAKE SURE KNOWNTAGS GETS PRINTED GOOD
-        Blynk.notify("Hey you're missing something"); // we explicitly wanted more than one notification.
-        secondTick.attach(interval, displace);
+        String tagString = "";
+        for (int j = 0; j < idLen; j++){tagString += knownTags[i][j];}
+        Blynk.notify("Hey you're missing something: " + tagString); // we explicitly wanted more than one notification.
         Serial.println("notify");
+        secondTick.attach(interval, displace);
       }
     }
     SLUNG = false;
@@ -263,6 +265,7 @@ void scrapeCalendar() {
 }
 
 void getDate(String data[]){
+  if(String(year()) == "1970"){delay(30000);ESP.reset();} // delay for a minute, and reset
   String d = String(day());
   if(d.length()==1){d = "0" + d;}
   String m = String(month());
