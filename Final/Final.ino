@@ -9,13 +9,12 @@ float acceli[3] = {0, 0, 0};
 float accelf[3] = {0, 0, 0};
 float displacement[3] = {0, 0, 0};
 float displacementval = 0;
-float interval = .1; // TOO SMALL OF A VALUE GIVES YOU TOO SMALL NUMBERS
+float interval = .5; // TOO SMALL OF A VALUE GIVES YOU TOO SMALL NUMBERS
 void accelerometerInit(){
   secondTick.attach(interval, displace);
   pinMode(S0, OUTPUT);
   pinMode(S1, OUTPUT);
   pinMode(A0, INPUT);
-  pinMode(13, OUTPUT); //buzzer pin
 }
 void displace() { // TODO: CONVERT DATA
   /*NOTE: because consumer grade accelerometers cannot find this kind of data
@@ -37,9 +36,11 @@ void displace() { // TODO: CONVERT DATA
   displacement[2] = displacement[2] + dz;
   //find accelf values
   acceli[0] = accelf[0];acceli[1] = accelf[1];acceli[2] = accelf[2];
-  displacementval = sqrt(pow(displacement[0], 2) + pow(displacement[1], 2) + pow(displacement[2], 2));
-  Serial.println(displacementval);
-  if(displacementval > 65){
+//  displacementval = sqrt(pow(displacement[0], 2) + pow(displacement[1], 2) + pow(displacement[2], 2));
+//  Serial.println(displacementval);
+  displacementval = sqrt(pow(dx, 2) + pow(dy, 2) + pow(dz, 2));
+  Serial.println("dxyz: " + String(displacementval));
+  if(displacementval > 115){ // THRESHOLD
     secondTick.detach();
     SLUNG = !SLUNG;
   }
@@ -137,6 +138,7 @@ void initRFID(){
 /*--RFID--*/
 void setup() {
   Serial.begin(9600);
+  while(!Serial){}
   Serial.println("**Blynk setup:**");
   blynkInit();
   Serial.println("**Temboo setup:**");

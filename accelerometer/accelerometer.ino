@@ -14,7 +14,6 @@ void accelerometerInit(){
   pinMode(S0, OUTPUT);
   pinMode(S1, OUTPUT);
   pinMode(A0, INPUT);
-  pinMode(13, OUTPUT); //buzzer pin
 }
 /* -- accelerometer --  */
 
@@ -24,7 +23,6 @@ void setup() {
 }
 
 void displace() {
-  // TODO: CONVERT DATA
   // 0b01 
   digitalWrite(S0, LOW); digitalWrite(S1, LOW);
   accelf[0] = analogRead(A0);
@@ -47,7 +45,8 @@ void displace() {
   acceli[0] = accelf[0];acceli[1] = accelf[1];acceli[2] = accelf[2];
   
   displacementval = sqrt(pow(displacement[0], 2) + pow(displacement[1], 2) + pow(displacement[2], 2));
-  Serial.println(displacementval);
+  Serial.println("displacement: " + String(displacementval));
+  Serial.println("dxyz: " + String(sqrt(pow(dx, 2) + pow(dy, 2) + pow(dz, 2))));
 }
 
 void loop() {
