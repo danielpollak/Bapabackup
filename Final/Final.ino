@@ -9,7 +9,7 @@ float acceli[3] = {0, 0, 0};
 float accelf[3] = {0, 0, 0};
 float displacement[3] = {0, 0, 0};
 float displacementval = 0;
-float interval = .5; // TOO SMALL OF A VALUE GIVES YOU TOO SMALL NUMBERS
+float interval = .1; // TOO SMALL OF A VALUE GIVES YOU TOO SMALL NUMBERS
 void accelerometerInit(){
   secondTick.attach(interval, displace);
   pinMode(S0, OUTPUT);
@@ -25,22 +25,18 @@ void displace() { // TODO: CONVERT DATA
   accelf[0] = analogRead(A0);
   float dx = 0.5 * (accelf[0] - acceli[0]) * pow(interval, 2);
   displacement[0] = displacement[0] + dx;
- 
   // 0b10
   digitalWrite(S0, HIGH); digitalWrite(S1, LOW);
   accelf[1] = analogRead(A0);
   float dy = 0.5 * (accelf[1] - acceli[1]) * pow(interval, 2);
   displacement[1] = displacement[1] + dy;
-  
   // 0b11
   digitalWrite(S0, LOW); digitalWrite(S1, HIGH);
   accelf[2] = analogRead(A0);
   float dz = 0.5 * (accelf[2] - acceli[2]) * pow(interval, 2);
   displacement[2] = displacement[2] + dz;
-
   //find accelf values
   acceli[0] = accelf[0];acceli[1] = accelf[1];acceli[2] = accelf[2];
-  
   displacementval = sqrt(pow(displacement[0], 2) + pow(displacement[1], 2) + pow(displacement[2], 2));
   Serial.println(displacementval);
   if(displacementval > 65){
@@ -97,6 +93,7 @@ void tembooInit(){
   scrapeWeather();
   delay(3000);getDate(date);
   scrapeCalendar();
+  delay(3000);
 }
 /*--Temboo--*/
 
@@ -138,13 +135,12 @@ void initRFID(){
    attachInterrupt(digitalPinToInterrupt(RFIDINTERRUPTPIN), rfidRead, RISING);
 }
 /*--RFID--*/
-//general
 void setup() {
   Serial.begin(9600);
   Serial.println("**Blynk setup:**");
   blynkInit();
-  //Serial.println("**Temboo setup:**");
-  //tembooInit(); // depends on Blynk
+  Serial.println("**Temboo setup:**");
+  tembooInit(); // depends on Blynk
   Serial.println("**RFID setup:**");
   initRFID();
   for(int i = 0; i < 5; i++){
@@ -161,7 +157,7 @@ void loop() {//
       Serial.println(String(present[i]) + "\t" + String(expected[i]));
       if(present[i] != expected[i]){
         // RIGHT HERE, MAKE SURE KNOWNTAGS GETS PRINTED GOOD
-        Blynk.notify("Hey you're missing something: "/*+String(knownTags[i])*/); // we explicitly wanted more than one notification.
+        Blynk.notify("Hey you're missing something"); // we explicitly wanted more than one notification.
         secondTick.attach(interval, displace);
         Serial.println("notify");
       }
@@ -178,18 +174,14 @@ void scrapeWeather() {
   GetWeatherByAddressChoreo.setAccountName(TEMBOO_ACCOUNT);
   GetWeatherByAddressChoreo.setAppKeyName(TEMBOO_APP_KEY_NAME);
   GetWeatherByAddressChoreo.setAppKey(TEMBOO_APP_KEY);
-  
   // Set Choreo inputs
   GetWeatherByAddressChoreo.addInput("Address", "Amherst, MA");
   GetWeatherByAddressChoreo.addInput("Day", "1");
-  
   // Identify the Choreo to run
   GetWeatherByAddressChoreo.setChoreo("/Library/Yahoo/Weather/GetWeatherByAddress");
-    
   //before run, set output filters (DAN)
   String weatherCodePath = "/rss/channel/item/yweather:forecast/@code";
   GetWeatherByAddressChoreo.addOutputFilter("weather", weatherCodePath, "Response");
-  
   // Run the Choreo; when results are available, print them to serial
   GetWeatherByAddressChoreo.run();
   String code = "";
@@ -210,34 +202,28 @@ void scrapeWeather() {
 
 void scrapeCalendar() {
   TembooChoreo SearchEventsChoreo(client);
-
   // Invoke the Temboo client
   SearchEventsChoreo.begin();
-
   // Set Temboo account credentials
   SearchEventsChoreo.setAccountName(TEMBOO_ACCOUNT);
   SearchEventsChoreo.setAppKeyName(TEMBOO_APP_KEY_NAME);
   SearchEventsChoreo.setAppKey(TEMBOO_APP_KEY);
-
   // Set Choreo inputs
   SearchEventsChoreo.addInput("ResponseFormat", "xml");
   SearchEventsChoreo.addInput("RefreshToken", "1/1Q8i7PsjI3bWvJT35bfnaa8ZE6oeISthyGlf1rbNQoU3RlbBvBZqRSjLMTBEQUAr");
   SearchEventsChoreo.addInput("ClientSecret", "qPZ7Sq7JLWz9QqFfbZFqzHGW");
   SearchEventsChoreo.addInput("CalendarID", "o7j1lqsqfnbbl39grvld25hjas@group.calendar.google.com");
-//  SearchEventsChoreo.addInput("SingleEvent", "1");
+  //  SearchEventsChoreo.addInput("SingleEvent", "1");
   SearchEventsChoreo.addInput("ClientID", "422310769533-ks1l8016agn5jbe20l0qg362euq403fg.apps.googleusercontent.com");
   SearchEventsChoreo.addInput("MinTime", date[0]);
   SearchEventsChoreo.addInput("MaxTime", date[1]);
-
   //before run, set output filters (DAN)
   String classSummaryPath = "//e/summary";
   String classDescriptionPath = "//e/description";
   SearchEventsChoreo.addOutputFilter("summary", classSummaryPath, "Response");
   SearchEventsChoreo.addOutputFilter("description", classDescriptionPath, "Response");
-    
   // Identify the Choreo to run
   SearchEventsChoreo.setChoreo("/Library/Google/Calendar/SearchEvents");
-    
   // Run the Choreo; when results are available, print them to serial
   SearchEventsChoreo.run();
   while(SearchEventsChoreo.available()) {
@@ -261,8 +247,7 @@ void scrapeCalendar() {
           Serial.println(kTagString);
           /*we just need a string for comparison*/
           if(kTagString == sub){ // which index of ktags is represented by this description?
-            pos = i;
-            break;
+            pos = i;break;
           }
         }
         if(!present[pos] && !expected[pos]){//  it is already in bag- redundancy checking.
@@ -272,19 +257,14 @@ void scrapeCalendar() {
       }
     }
   }
-  delay(100);
-  SearchEventsChoreo.close();
+  delay(100);SearchEventsChoreo.close();
 }
 
 void getDate(String data[]){
   String d = String(day());
-  if(d.length()==1){
-    d = "0" + d;
-  }
+  if(d.length()==1){d = "0" + d;}
   String m = String(month());
-  if(m.length()==1){
-    m = "0" + m;
-  }
+  if(m.length()==1){m = "0" + m;}
   data[0] = String(year()) + "-" + m + "-" + d + "T01:00:00-04:00";
   data[1] = String(year()) + "-" + m + "-" + d + "T23:59:59-04:00";
 }
@@ -297,7 +277,6 @@ void rfidRead(){
   if(tag) {
     int i = 0;// Counter for the newTag array
     int readByte;// Variable to hold each byte read from the serial buffer
-    //String tagString = "";
     while (rSerial.available()) {
       // Take each byte out of the serial buffer, one at a time
       readByte = rSerial.read();
@@ -306,12 +285,9 @@ void rfidRead(){
       the first space in the array, then steps ahead one spot */
       
       if (readByte != 2 && readByte!= 13 && readByte != 10 && readByte != 3) {
-        //tagString += char(readByte);
         newTag[i] = readByte; i++;
       } else if (readByte == 3) {  tag = false; }      // If we see ASCII 3, ETX, the tag is over
     }
-    //tagString += " "; //I RANDOMLY NEED TO HAVE EXTRA STUFF HERE
-    //Serial.println("ReadTag:  " + tagString);
     // don't do anything if the newTag array is full of zeroes
     if (strlen(newTag)== 0) {return;}
     else //check against known tags, increase total if in known tags
@@ -321,13 +297,6 @@ void rfidRead(){
           Serial.println("HI!");
           present[i] = !present[i]; break; // change the data in the known present tags
         }
-//        /*we just need a string for comparison*/
-//        String kTagString = ""; for(int j = 0; j < idLen; j++){ kTagString += (knownTags[i][j]); }; 
-//        Serial.println(kTagString);
-//        /*we just need a string for comparison*/
-//        if(kTagString == tagString){ // which index of ktags is represented by this description?
-//          present[i] = !present[i]; break; // change the data in the known present tags
-//        }
       }
       for (int c=0; c < idLen; c++) {newTag[c] = 0;} // Once newTag has been checked, fill it with zeroes to get ready for the next tag read
     }
