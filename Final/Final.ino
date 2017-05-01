@@ -196,8 +196,9 @@ void scrapeWeather() {
   }
   code.trim(); int data = code.toInt();
   Serial.print("code:"); Serial.println(code);
-  if(data <= 12 || data == 17 || data == 18 || data == 35 || ( data>= 37 || data<= 40) || data== 45 || data== 47){
+  if(data <= 12 || data == 17 || data == 18 || data == 35 || ( data>= 37 && data<= 40) || data== 45 || data== 47){
     expected[1] = true;
+    Serial.println("umbrella");
   }
 
   GetWeatherByAddressChoreo.close();
@@ -234,7 +235,6 @@ void scrapeCalendar() {
     String summary = SearchEventsChoreo.readStringUntil('\x1F'); summary.trim(); // use “trim” to get rid of newlines
     Serial.println(summary);
     String description = SearchEventsChoreo.readStringUntil('\x1E');
-    int pos = 0; // represents index of the tag of item just scanned in
     int tmp = 0;
     String sub = "";
     if(summary == "description"){
@@ -245,17 +245,15 @@ void scrapeCalendar() {
         for(int i = 0; i<5; i++){
           /*we just need a string for comparison*/
           String kTagString = "";
-          for(int j = 0; j < idLen; j++){
-            kTagString += (knownTags[i][j]);
+          for(int j = 0; j<5; j++){
+            kTagString = knownTags[j];
+            if(kTagString==sub){
+              expected[j] = true; // make expected at thing pos equal true
+              Serial.println(kTagString);
+              break;
+            }
           }
-          Serial.println(kTagString);
           /*we just need a string for comparison*/
-          if(kTagString == sub){ // which index of ktags is represented by this description?
-            pos = i;break;
-          }
-        }
-        if(!present[pos] && !expected[pos]){//  it is already in bag- redundancy checking.
-          expected[pos] = true; // make expected at thing pos equal true
         }
         description = description.substring(tmp+1);
       }
@@ -299,7 +297,7 @@ void rfidRead(){
     {
       for(int i = 0; i<5; i++){
         if(checkTag(newTag, knownTags[i])){
-          Serial.println("HI!");
+//          Serial.println("HI!");
           present[i] = !present[i]; break; // change the data in the known present tags
         }
       }
