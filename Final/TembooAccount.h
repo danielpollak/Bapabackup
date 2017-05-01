@@ -8,7 +8,7 @@ and copy this content into it.
 
 #define TEMBOO_ACCOUNT "dpollak"  // Your Temboo account name 
 #define TEMBOO_APP_KEY_NAME "myFirstApp"  // Your Temboo app key name
-#define TEMBOO_APP_KEY "zFn3WEXtlwf0MWeaDlkQsUl2n2g2ijP8"  // Your Temboo app key
+#define TEMBOO_APP_KEY "I4oI4tyGSg576i5dQMejJdngqfCRb2B5"  // Your Temboo app key
 
 
 
