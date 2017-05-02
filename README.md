@@ -8,11 +8,13 @@ We wanted to make something that would make real life more efficient, but withou
 
 ### Technical difficulties
 The RFID module
+
 Where to begin! First off, the RFID module we use is consistently seen in online tutorials alongside a breakout board, cleverly designed to convert its impractically tiny XBee pins to a breadboard friendly size, as well as obfuscate the actual inner workings of the module, making it hard for a non-expert to dig into the data sheet and ground the correct pin, and compelling the consumer to shell out another twenty for the breakout. Parsing that gem took a good half week.
 
 The next challenge was to implement an interrupt-based activation scheme for reading data to the board, as the module was integrated into software using the polling method. We luckily found a pin that could activate a digital interrupt by spending some quality time with the data sheet.
 
 The accelerometer
+
 The method of sensing motion that we originally envisioned involved deriving acceleration readings twice at set interrupt intervals (the interrupts being something that remained in our final version).  These data would be muxed to a single ADC pin, and saved as approximations of dx, dy, and dz (as this was a three-dimensional accelerometer). This dx, dy, and dz readings would be added to a vector called displacement, and each element in said vector would be squared, summed, and rooted to find the overall displacement. Unfortunately, consumer-grade accelerometers simply arent precise enough for such things. Instead we used some mathematical trickery to get an approximation of net movement, and found that to work just as well.
 
 
